@@ -2,7 +2,7 @@ package license
 
 import "testing"
 
-func TestScanLeft(t *testing.T) {
+func TestScan(t *testing.T) {
 	text := "she sells sea shells by the sea shore"
 
 	// scanLeft matches properly
