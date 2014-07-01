@@ -119,3 +119,27 @@ func TestLicenseRecognized(t *testing.T) {
 		t.Fatalf("fake license was recognized")
 	}
 }
+
+func TestLicenseTypes(t *testing.T) {
+	licenseStrings := []string{
+		"The MIT License (MIT)",
+		"Apache License\nVersion 2.0, January 2004",
+		"GNU GENERAL PUBLIC LICENSE\nVersion 2, June 1991",
+		"GNU GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
+		"GNU LESSER GENERAL PUBLIC LICENSE\nVersion 2.1, February 1999",
+		"GNU LESSER GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
+		"Mozilla Public License Version 2.0",
+		"Redistribution and use in source and binary forms\n4. Neither",
+		"Redistribution and use in source and binary forms\n* Redistributions",
+		"Redistribution and use in source and binary forms\nFreeBSD Project.",
+		"(CDDL)\nVersion 1.0",
+		"Eclipse Public License - v 1.0",
+	}
+
+	for _, s := range licenseStrings {
+		l := New("", s)
+		if _, err := l.guessType(); err != nil {
+			t.Fatalf("failed to identify license: %s", s)
+		}
+	}
+}

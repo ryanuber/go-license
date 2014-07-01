@@ -131,8 +131,11 @@ func (l *License) guessType() (string, error) {
 	case scanLeft(l.Text, "The MIT License"):
 		return LicenseMIT, nil
 
-	case scanLeft(l.Text, "Apache License, Version 2.0"):
-		return LicenseApache20, nil
+	case scanLeft(l.Text, "Apache License"):
+		switch {
+		case scanLeft(l.Text, "Version 2.0"):
+			return LicenseApache20, nil
+		}
 
 	case scanLeft(l.Text, "GNU GENERAL PUBLIC LICENSE"):
 		switch {
@@ -150,24 +153,27 @@ func (l *License) guessType() (string, error) {
 			return LicenseLGPL30, nil
 		}
 
-	case scanLeft(l.Text, "Mozilla Public License, version 2.0"):
+	case scanLeft(l.Text, "Mozilla Public License Version 2.0"):
 		return LicenseMPL20, nil
 
-	case scanLeft(l.Text, "1. Redistributions"):
+	case scanLeft(l.Text, "Redistribution and use in source and binary forms"):
 		switch {
-		case scanLeft(l.Text, "3. All") && scanLeft(l.Text, "4. Neither"):
+		case scanLeft(l.Text, "4. Neither"):
 			return LicenseBSD, nil
-		case scanLeft(l.Text, "* Redistributions of"):
+		case scanLeft(l.Text, "* Redistribution"):
 			return LicenseNewBSD, nil
-		default:
+		case scanRight(l.Text, "FreeBSD Project."):
 			return LicenseFreeBSD, nil
 		}
 
-	case scanLeft(l.Text, "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE"):
+	case scanRight(l.Text, "(CDDL)"):
 		switch {
 		case scanRight(l.Text, "Version 1.0"):
 			return LicenseCDDL10, nil
 		}
+
+	case scanLeft(l.Text, "Eclipse Public License - v 1.0"):
+		return LicenseEPL10, nil
 	}
 
 	return "", errors.New(ErrUnrecognizedLicense)
