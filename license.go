@@ -8,12 +8,6 @@ import (
 	"path/filepath"
 )
 
-// License describes a software license
-type License struct {
-	Type string // The type of license in use
-	Text string // License text data
-}
-
 const (
 	// Recognized license types
 	LicenseMIT      = "MIT"
@@ -55,6 +49,12 @@ var KnownLicenses = []string{
 	LicenseLGPL30,
 	LicenseCDDL10,
 	LicenseEPL10,
+}
+
+// License describes a software license
+type License struct {
+	Type string // The type of license in use
+	Text string // License text data
 }
 
 // New creates a new License from explicitly passed license type and data
