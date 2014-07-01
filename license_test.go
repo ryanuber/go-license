@@ -22,7 +22,7 @@ func TestNewFromFile(t *testing.T) {
 	}
 	defer f.Close()
 
-	f.WriteString(`
+	licenseText := `
 The MIT License (MIT)
 
 Copyright (c) <year> <copyright holders>
@@ -44,12 +44,22 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
-`)
+`
+
+	if _, err := f.WriteString(licenseText); err != nil {
+		t.Fatalf("err: %s", err)
+	}
 
 	l, err := NewFromFile(f.Name())
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	l.Recognized()
+	if l.Type != "MIT" {
+		t.Fatalf("unexpected license type: %s", l.Type)
+	}
+
+	if l.Text != licenseText {
+		t.Fatalf("unexpected license text: %s", l.Text)
+	}
 }
