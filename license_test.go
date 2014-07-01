@@ -42,6 +42,20 @@ func TestNewFromFile(t *testing.T) {
 	if l.Text != licenseText {
 		t.Fatalf("unexpected license text: %s", l.Text)
 	}
+
+	// Fails properly if the file doesn't exist
+	if _, err := NewFromFile("/tmp/go-license-nonexistent"); err == nil {
+		t.Fatalf("expected error loading non-existent file")
+	}
+
+	// Fails properly if license type from file is not guessable
+	if err := os.Truncate(f.Name(), 0); err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	f.WriteString("No license data")
+	if _, err := NewFromFile(f.Name()); err == nil {
+		t.Fatalf("expected error guessing license type from non-license file")
+	}
 }
 
 func TestNewFromDir(t *testing.T) {
@@ -50,6 +64,11 @@ func TestNewFromDir(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 	defer os.RemoveAll(d)
+
+	// Fails properly if the directory contains no license files
+	if _, err := NewFromDir(d); err == nil {
+		t.Fatalf("expected error loading empty directory")
+	}
 
 	fPath := filepath.Join(d, "LICENSE")
 	f, err := os.Create(fPath)
@@ -74,6 +93,16 @@ func TestNewFromDir(t *testing.T) {
 
 	if l.Text != licenseText {
 		t.Fatalf("unexpected license text: %s", l.Text)
+	}
+
+	// Fails properly if the directory does not exist
+	if _, err := NewFromDir("go-license-nonexistent"); err == nil {
+		t.Fatalf("expected error loading non-existent directory")
+	}
+
+	// Fails properly if the directory specified is actually a file
+	if _, err := NewFromDir(fPath); err == nil {
+		t.Fatalf("expected error loading file as directory")
 	}
 }
 
