@@ -1,5 +1,4 @@
-go-license
-==========
+# go-license [![Build Status](https://travis-ci.org/ryanuber/go-license.svg)](https://travis-ci.org/ryanuber/go-license)
 
 A license management utility for programs written in Golang.
 
