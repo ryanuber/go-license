@@ -76,3 +76,17 @@ func TestNewFromDir(t *testing.T) {
 		t.Fatalf("unexpected license text: %s", l.Text)
 	}
 }
+
+func TestLicenseRecognized(t *testing.T) {
+	// Known licenses are recognized
+	l := New("MIT", "The MIT License (MIT)")
+	if !l.Recognized() {
+		t.Fatalf("license was not recognized")
+	}
+
+	// Unknown licenses are not recognized
+	l = New("None", "No license text")
+	if l.Recognized() {
+		t.Fatalf("fake license was recognized")
+	}
+}
