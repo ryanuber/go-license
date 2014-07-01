@@ -57,6 +57,7 @@ var KnownLicenses = []string{
 	LicenseEPL10,
 }
 
+// New creates a new License from explicitly passed license type and data
 func New(licenseType, licenseText string) *License {
 	l := &License{
 		Type: licenseType,
@@ -65,6 +66,8 @@ func New(licenseType, licenseText string) *License {
 	return l
 }
 
+// NewFromFile will attempt to load a license from a file on disk, and guess the
+// type of license based on the bytes read.
 func NewFromFile(path string) (*License, error) {
 	licenseText, err := ioutil.ReadFile(path)
 	if err != nil {
@@ -82,8 +85,10 @@ func NewFromFile(path string) (*License, error) {
 	return l, nil
 }
 
+// NewFromDir will search a directory for well-known and accepted license file
+// names, and if one is found, read in its content and guess the license type.
 func NewFromDir(dir string) (*License, error) {
-	fileName, err := findDefaultLicenseFile(dir)
+	fileName, err := guessFile(dir)
 	if err != nil {
 		return nil, err
 	}
@@ -102,8 +107,9 @@ func (l *License) Recognized() bool {
 	return false
 }
 
-// findDefaultLicenseFile discovers common license files automatically
-func findDefaultLicenseFile(dir string) (string, error) {
+// guessFile searches a given directory (non-recursively) for files with well-
+// established names that indicate license content.
+func guessFile(dir string) (string, error) {
 	d, err := os.Stat(dir)
 	if err != nil {
 		return "", err
