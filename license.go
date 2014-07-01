@@ -55,6 +55,7 @@ var KnownLicenses = []string{
 type License struct {
 	Type string // The type of license in use
 	Text string // License text data
+	File string // The path to the source file, if any
 }
 
 // New creates a new License from explicitly passed license type and data
@@ -74,7 +75,10 @@ func NewFromFile(path string) (*License, error) {
 		return nil, err
 	}
 
-	l := &License{Text: string(licenseText)}
+	l := &License{
+		Text: string(licenseText),
+		File: path,
+	}
 
 	licenseType, err := l.guessType()
 	if err != nil {

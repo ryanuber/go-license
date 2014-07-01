@@ -43,6 +43,10 @@ func TestNewFromFile(t *testing.T) {
 		t.Fatalf("unexpected license text: %s", l.Text)
 	}
 
+	if l.File != f.Name() {
+		t.Fatalf("unexpected file path: %s", l.File)
+	}
+
 	// Fails properly if the file doesn't exist
 	if _, err := NewFromFile("/tmp/go-license-nonexistent"); err == nil {
 		t.Fatalf("expected error loading non-existent file")
@@ -93,6 +97,10 @@ func TestNewFromDir(t *testing.T) {
 
 	if l.Text != licenseText {
 		t.Fatalf("unexpected license text: %s", l.Text)
+	}
+
+	if l.File != fPath {
+		t.Fatalf("unexpected file path: %s", l.File)
 	}
 
 	// Fails properly if the directory does not exist
