@@ -42,6 +42,22 @@ var DefaultLicenseFiles = []string{
 	"COPYING", "COPYING.txt", "COPYING.md", "copying.txt",
 }
 
+// A slice of standardized license abbreviations
+var KnownLicenses = []string{
+	LicenseMIT,
+	LicenseBSD,
+	LicenseNewBSD,
+	LicenseFreeBSD,
+	LicenseApache20,
+	LicenseMPL20,
+	LicenseGPL20,
+	LicenseGPL30,
+	LicenseLGPL21,
+	LicenseLGPL30,
+	LicenseCDDL10,
+	LicenseEPL10,
+}
+
 func New(licenseType, licenseText string) *License {
 	l := &License{
 		Type: licenseType,
@@ -75,6 +91,16 @@ func NewFromDir(dir string) (*License, error) {
 
 	filePath := filepath.Join(dir, fileName)
 	return NewFromFile(filePath)
+}
+
+// Recognized determines if the license is known to go-license.
+func (l *License) Recognized() bool {
+	for _, license := range KnownLicenses {
+		if license == l.Type {
+			return true
+		}
+	}
+	return false
 }
 
 // findDefaultLicenseFile discovers common license files automatically
