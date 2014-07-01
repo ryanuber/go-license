@@ -18,3 +18,45 @@ licenses.
 This program also provides naive license guessing based on the license body
 (text). This makes it easy to just throw a blob of text in and get a
 standardized license identifier string out.
+
+## Example
+
+```go
+package main
+
+import (
+    "fmt"
+    "github.com/ryanuber/go-license"
+)
+
+func main() {
+
+    // This case will work if there is a guessable license file in the
+    // test directory.
+    l, err := license.NewFromDir("~/test")
+    if err != nil {
+        fmt.Println(err.Error())
+        return
+    }
+
+    fmt.Println(l.Type)
+
+    // This case will do the exact same thing as above, but uses an explicitly
+    // set license file name instead of searching for one.
+    l, err := license.NewFromFile("~/test/LICENSE")
+    if err != nil {
+        fmt.Println(err.Error())
+        return
+    }
+
+    fmt.Println(l.Type)
+
+    // This case will work in all cases. The license type and the license data
+    // are both being set explicitly. This enables one to use any license.
+    l := license.New("MyLicense", "My terms go here")
+    fmt.Println(l.Type)
+
+    // This call determines if the license in use is recognized by go-license.
+    fmt.Printf("%#v", l.Recognized())
+}
+```
