@@ -8,9 +8,9 @@ abbreviated name for each known license type.
 
 ## Enforcement
 
-License identifier enforcement is not strict. There is no way we can know all
-types of licenses. This makes it possible to warn when an unrecognized license
-type is used, encouraging either conformance or an update to the list of known
+License identifier enforcement is not strict. This makes it possible to warn
+when an unrecognized license type is used, encouraging either conformance or an
+update to the list of known licenses. There is no way we can know all types of
 licenses.
 
 ## License guessing
