@@ -29,7 +29,7 @@ const (
 )
 
 // A set of reasonable license file names to use when guessing where the
-// license may be during a crate pack.
+// license may be.
 var DefaultLicenseFiles = []string{
 	"LICENSE", "LICENSE.txt", "LICENSE.md", "license.txt",
 	"COPYING", "COPYING.txt", "COPYING.md", "copying.txt",
