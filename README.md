@@ -53,6 +53,16 @@ func main() {
 
     fmt.Println(l.Type)
 
+    // This case will work when the license type can be guessed based on text
+    l = new(license.License)
+    l.Text = "The MIT License (MIT)"
+    if err := l.GuessType(); err != nil {
+        fmt.Println(err.Error())
+        return
+    }
+
+    fmt.Println(l.Type)
+
     // This case will work in all cases. The license type and the license data
     // are both being set explicitly. This enables one to use any license.
     l = license.New("MyLicense", "My terms go here")

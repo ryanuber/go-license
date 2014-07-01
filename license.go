@@ -80,11 +80,9 @@ func NewFromFile(path string) (*License, error) {
 		File: path,
 	}
 
-	licenseType, err := l.guessType()
-	if err != nil {
+	if err := l.GuessType(); err != nil {
 		return nil, err
 	}
-	l.Type = licenseType
 
 	return l, nil
 }
@@ -92,13 +90,13 @@ func NewFromFile(path string) (*License, error) {
 // NewFromDir will search a directory for well-known and accepted license file
 // names, and if one is found, read in its content and guess the license type.
 func NewFromDir(dir string) (*License, error) {
-	fileName, err := guessFile(dir)
-	if err != nil {
+	l := new(License)
+
+	if err := l.GuessFile(dir); err != nil {
 		return nil, err
 	}
 
-	filePath := filepath.Join(dir, fileName)
-	return NewFromFile(filePath)
+	return NewFromFile(l.File)
 }
 
 // Recognized determines if the license is known to go-license.
@@ -111,80 +109,84 @@ func (l *License) Recognized() bool {
 	return false
 }
 
-// guessFile searches a given directory (non-recursively) for files with well-
+// GuessFile searches a given directory (non-recursively) for files with well-
 // established names that indicate license content.
-func guessFile(dir string) (string, error) {
+func (l *License) GuessFile(dir string) error {
 	d, err := os.Stat(dir)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if !d.IsDir() {
-		return "", fmt.Errorf("license: cannot search %s: not a directory", dir)
+		return fmt.Errorf("license: cannot search %s: not a directory", dir)
 	}
 
 	for _, file := range DefaultLicenseFiles {
 		filePath := filepath.Join(dir, file)
 		_, err := os.Stat(filePath)
 		if err == nil {
-			return file, nil
+			l.File = filePath
+			return nil
 		}
 	}
-	return "", errors.New(ErrNoLicenseFile)
+	return errors.New(ErrNoLicenseFile)
 }
 
-// guessType will scan license text and attempt to guess what license type it
+// GuessType will scan license text and attempt to guess what license type it
 // describes. It will return the license type on success, or an error if it
 // cannot accurately guess the license type.
-func (l *License) guessType() (string, error) {
+func (l *License) GuessType() error {
 	switch {
 	case scanLeft(l.Text, "The MIT License"):
-		return LicenseMIT, nil
+		l.Type = LicenseMIT
 
 	case scanLeft(l.Text, "Apache License"):
 		switch {
 		case scanLeft(l.Text, "Version 2.0"):
-			return LicenseApache20, nil
+			l.Type = LicenseApache20
 		}
 
 	case scanLeft(l.Text, "GNU GENERAL PUBLIC LICENSE"):
 		switch {
 		case scanLeft(l.Text, "Version 2"):
-			return LicenseGPL20, nil
+			l.Type = LicenseGPL20
 		case scanLeft(l.Text, "Version 3"):
-			return LicenseGPL30, nil
+			l.Type = LicenseGPL30
 		}
 
 	case scanLeft(l.Text, "GNU LESSER GENERAL PUBLIC LICENSE"):
 		switch {
 		case scanLeft(l.Text, "Version 2.1"):
-			return LicenseLGPL21, nil
+			l.Type = LicenseLGPL21
 		case scanLeft(l.Text, "Version 3"):
-			return LicenseLGPL30, nil
+			l.Type = LicenseLGPL30
 		}
 
 	case scanLeft(l.Text, "Mozilla Public License Version 2.0"):
-		return LicenseMPL20, nil
+		l.Type = LicenseMPL20
 
 	case scanLeft(l.Text, "Redistribution and use in source and binary forms"):
 		switch {
 		case scanLeft(l.Text, "4. Neither"):
-			return LicenseBSD, nil
+			l.Type = LicenseBSD
 		case scanLeft(l.Text, "* Redistribution"):
-			return LicenseNewBSD, nil
+			l.Type = LicenseNewBSD
 		case scanRight(l.Text, "FreeBSD Project."):
-			return LicenseFreeBSD, nil
+			l.Type = LicenseFreeBSD
 		}
 
 	case scanRight(l.Text, "(CDDL)"):
 		switch {
 		case scanRight(l.Text, "Version 1.0"):
-			return LicenseCDDL10, nil
+			l.Type = LicenseCDDL10
 		}
 
 	case scanLeft(l.Text, "Eclipse Public License - v 1.0"):
-		return LicenseEPL10, nil
+		l.Type = LicenseEPL10
+
+	default:
+		return errors.New(ErrUnrecognizedLicense)
 	}
 
-	return "", errors.New(ErrUnrecognizedLicense)
+	return nil
 }

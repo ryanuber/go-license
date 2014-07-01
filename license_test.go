@@ -146,7 +146,7 @@ func TestLicenseTypes(t *testing.T) {
 
 	for _, s := range licenseStrings {
 		l := New("", s)
-		if _, err := l.guessType(); err != nil {
+		if err := l.GuessType(); err != nil {
 			t.Fatalf("failed to identify license: %s", s)
 		}
 	}
