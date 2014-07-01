@@ -19,6 +19,10 @@ This program also provides naive license guessing based on the license body
 (text). This makes it easy to just throw a blob of text in and get a
 standardized license identifier string out.
 
+It is also possible to have `go-license` guess the file name that contains the
+license data. This is done by scanning a directory for well-known license file
+names.
+
 ## Example
 
 ```go
