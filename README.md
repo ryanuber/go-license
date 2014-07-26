@@ -22,6 +22,48 @@ It is also possible to have `go-license` guess the file name that contains the
 license data. This is done by scanning a directory for well-known license file
 names.
 
+## Recognized License Types
+
+`MIT`<br>
+The MIT license. ([text](http://opensource.org/licenses/MIT))
+
+`NewBSD`<br>
+The "new" or "revised" BSD license.
+([text](http://opensource.org/licenses/BSD-3-Clause))
+
+`FreeBSD`<br>
+The "simplified" BSD  license.
+([text](http://opensource.org/licenses/BSD-2-Clause))
+
+`Apache-2.0`<br>
+Apache License, version 2.0 ([text](http://opensource.org/licenses/Apache-2.0))
+
+`MPL-2.0`<br>
+The Mozilla Public License v2.0 ([text](http://opensource.org/licenses/MPL-2.0))
+
+`GPL-2.0`<br>
+The GNU General Public License v2.0
+([text](http://opensource.org/licenses/GPL-2.0))
+
+`GPL-3.0`<br>
+The GNU General Public License v3.0
+([text](http://opensource.org/licenses/GPL-3.0))
+
+`LGPL-2.1`<br>
+GNU Library or "Lesser" General Public License v2.1
+([text](http://opensource.org/licenses/LGPL-2.1))
+
+`LGPL-3.0`<br>
+GNU Library or "Lesser" General Public License v3.0
+([text](http://opensource.org/licenses/LGPL-3.0))
+
+`CDDL-1.0`<br>
+Common Development and Distribution License v1.0
+([text](http://opensource.org/licenses/CDDL-1.0))
+
+`EPL-1.0`<br>
+Eclipse Public License v1.0 ([text](http://opensource.org/licenses/EPL-1.0))
+
 ## Example
 
 ```go

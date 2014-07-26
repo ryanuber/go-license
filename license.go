@@ -11,7 +11,6 @@ import (
 const (
 	// Recognized license types
 	LicenseMIT      = "MIT"
-	LicenseBSD      = "BSD"
 	LicenseNewBSD   = "NewBSD"
 	LicenseFreeBSD  = "FreeBSD"
 	LicenseApache20 = "Apache-2.0"
@@ -38,7 +37,6 @@ var DefaultLicenseFiles = []string{
 // A slice of standardized license abbreviations
 var KnownLicenses = []string{
 	LicenseMIT,
-	LicenseBSD,
 	LicenseNewBSD,
 	LicenseFreeBSD,
 	LicenseApache20,
@@ -167,8 +165,6 @@ func (l *License) GuessType() error {
 
 	case scanLeft(l.Text, "Redistribution and use in source and binary forms"):
 		switch {
-		case scanLeft(l.Text, "4. Neither"):
-			l.Type = LicenseBSD
 		case scanLeft(l.Text, "* Redistribution"):
 			l.Type = LicenseNewBSD
 		case scanRight(l.Text, "FreeBSD Project."):
