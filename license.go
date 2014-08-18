@@ -143,9 +143,9 @@ func (l *License) GuessType() error {
 
 	case scan(l.Text, "^ *gnu general public license$"):
 		switch {
-		case scan(l.Text, "^version 2,"):
+		case scan(l.Text, "^ *version 2,"):
 			l.Type = LicenseGPL20
-		case scan(l.Text, "^version 3,"):
+		case scan(l.Text, "^ *version 3,"):
 			l.Type = LicenseGPL30
 		}
 
