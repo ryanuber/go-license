@@ -129,25 +129,27 @@ func TestLicenseRecognized(t *testing.T) {
 }
 
 func TestLicenseTypes(t *testing.T) {
-	licenseStrings := []string{
-		"The MIT License (MIT)",
-		"Apache License\nVersion 2.0, January 2004",
-		"GNU GENERAL PUBLIC LICENSE\nVersion 2, June 1991",
-		"GNU GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
-		"GNU LESSER GENERAL PUBLIC LICENSE\nVersion 2.1, February 1999",
-		"GNU LESSER GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
-		"Mozilla Public License Version 2.0",
-		"Redistribution and use in source and binary forms\n4. Neither",
-		"Redistribution and use in source and binary forms\n* Redistributions",
-		"Redistribution and use in source and binary forms\nFreeBSD Project.",
-		"(CDDL)\nVersion 1.0",
-		"Eclipse Public License - v 1.0",
+	licenseStrings := map[string]string{
+		"MIT":        "The MIT License (MIT)",
+		"Apache-2.0": "Apache License\nVersion 2.0, January 2004",
+		"GPL-2.0":    "GNU GENERAL PUBLIC LICENSE\nVersion 2, June 1991",
+		"GPL-3.0":    "GNU GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
+		"LGPL-2.1":   "GNU LESSER GENERAL PUBLIC LICENSE\nVersion 2.1, February 1999",
+		"LGPL-3.0":   "GNU LESSER GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
+		"MPL-2.0":    "Mozilla Public License Version 2.0",
+		"NewBSD":     "Redistribution and use in source and binary forms\n* Neither the name of the <organization>",
+		"FreeBSD":    "Redistribution and use in source and binary forms\n",
+		"CDDL-1.0":   "COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0",
+		"EPL-1.0":    "Eclipse Public License - v 1.0",
 	}
 
-	for _, s := range licenseStrings {
-		l := New("", s)
+	for ltype, ltext := range licenseStrings {
+		l := New("", ltext)
 		if err := l.GuessType(); err != nil {
-			t.Fatalf("failed to identify license: %s", s)
+			t.Fatalf("failed to identify license: %s", ltext)
+		}
+		if l.Type != ltype {
+			t.Fatalf("\nexpected: %s\ngot: %s", ltype, l.Type)
 		}
 	}
 }
