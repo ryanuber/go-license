@@ -135,49 +135,44 @@ func (l *License) GuessFile(dir string) error {
 // cannot accurately guess the license type.
 func (l *License) GuessType() error {
 	switch {
-	case scanLeft(l.Text, "The MIT License"):
+	case scan(l.Text, "^(the )?mit license( \\(mit\\))?"):
 		l.Type = LicenseMIT
 
-	case scanLeft(l.Text, "Apache License"):
-		switch {
-		case scanLeft(l.Text, "Version 2.0"):
-			l.Type = LicenseApache20
-		}
+	case scan(l.Text, "^ *apache license$") && scan(l.Text, "version 2.0,"):
+		l.Type = LicenseApache20
 
-	case scanLeft(l.Text, "GNU GENERAL PUBLIC LICENSE"):
+	case scan(l.Text, "^ *gnu general public license$"):
 		switch {
-		case scanLeft(l.Text, "Version 2"):
+		case scan(l.Text, "^ *version 2,"):
 			l.Type = LicenseGPL20
-		case scanLeft(l.Text, "Version 3"):
+		case scan(l.Text, "^ *version 3,"):
 			l.Type = LicenseGPL30
 		}
 
-	case scanLeft(l.Text, "GNU LESSER GENERAL PUBLIC LICENSE"):
+	case scan(l.Text, "^ *gnu lesser general public license$"):
 		switch {
-		case scanLeft(l.Text, "Version 2.1"):
+		case scan(l.Text, "version 2.1,"):
 			l.Type = LicenseLGPL21
-		case scanLeft(l.Text, "Version 3"):
+		case scan(l.Text, "version 3,"):
 			l.Type = LicenseLGPL30
 		}
 
-	case scanLeft(l.Text, "Mozilla Public License Version 2.0"):
+	case scan(l.Text, "mozilla public license.*version 2.0"):
 		l.Type = LicenseMPL20
 
-	case scanLeft(l.Text, "Redistribution and use in source and binary forms"):
+	case scan(l.Text, "redistribution and use in source and binary forms"):
 		switch {
-		case scanLeft(l.Text, "* Redistribution"):
+		case scan(l.Text, "neither the name of the .* nor the"):
 			l.Type = LicenseNewBSD
-		case scanRight(l.Text, "FreeBSD Project."):
+		default:
 			l.Type = LicenseFreeBSD
 		}
 
-	case scanRight(l.Text, "(CDDL)"):
-		switch {
-		case scanRight(l.Text, "Version 1.0"):
-			l.Type = LicenseCDDL10
-		}
+	case scan(l.Text, "^common development and distribution license \\(cddl\\)") &&
+		scan(l.Text, "version 1.0$"):
+		l.Type = LicenseCDDL10
 
-	case scanLeft(l.Text, "Eclipse Public License - v 1.0"):
+	case scan(l.Text, "eclipse public license - v 1.0"):
 		l.Type = LicenseEPL10
 
 	default:

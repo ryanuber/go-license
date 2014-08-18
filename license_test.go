@@ -129,25 +129,24 @@ func TestLicenseRecognized(t *testing.T) {
 }
 
 func TestLicenseTypes(t *testing.T) {
-	licenseStrings := []string{
-		"The MIT License (MIT)",
-		"Apache License\nVersion 2.0, January 2004",
-		"GNU GENERAL PUBLIC LICENSE\nVersion 2, June 1991",
-		"GNU GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
-		"GNU LESSER GENERAL PUBLIC LICENSE\nVersion 2.1, February 1999",
-		"GNU LESSER GENERAL PUBLIC LICENSE\nVersion 3, 29 June 2007",
-		"Mozilla Public License Version 2.0",
-		"Redistribution and use in source and binary forms\n4. Neither",
-		"Redistribution and use in source and binary forms\n* Redistributions",
-		"Redistribution and use in source and binary forms\nFreeBSD Project.",
-		"(CDDL)\nVersion 1.0",
-		"Eclipse Public License - v 1.0",
-	}
+	for _, ltype := range KnownLicenses {
+		file := filepath.Join("fixtures", "licenses", ltype)
+		fh, err := os.Open(file)
+		if err != nil {
+			t.Fatalf("err: %s", err)
+		}
+		lbytes, err := ioutil.ReadAll(fh)
+		if err != nil {
+			t.Fatalf("err :%s", err)
+		}
+		ltext := string(lbytes)
 
-	for _, s := range licenseStrings {
-		l := New("", s)
+		l := New("", ltext)
 		if err := l.GuessType(); err != nil {
-			t.Fatalf("failed to identify license: %s", s)
+			t.Fatalf("failed to identify license: %s", ltext)
+		}
+		if l.Type != ltype {
+			t.Fatalf("\nexpected: %s\ngot: %s", ltype, l.Type)
 		}
 	}
 }
