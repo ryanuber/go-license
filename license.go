@@ -162,7 +162,7 @@ func (l *License) GuessType() error {
 
 	case scan(l.Text, "redistribution and use in source and binary forms"):
 		switch {
-		case scan(l.Text, "neither the name of the .* nor the"):
+		case scan(l.Text, "neither the name of .* nor"):
 			l.Type = LicenseNewBSD
 		default:
 			l.Type = LicenseFreeBSD
