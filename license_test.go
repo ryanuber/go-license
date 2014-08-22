@@ -18,19 +18,20 @@ func TestNewLicense(t *testing.T) {
 }
 
 func TestNewFromFile(t *testing.T) {
-	f, err := ioutil.TempFile("", "go-license")
+	lf := filepath.Join("fixtures", "licenses", "MIT")
+
+	lh, err := os.Open(lf)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	defer os.Remove(f.Name())
+	defer lh.Close()
 
-	licenseText := "The MIT License (MIT)"
-
-	if _, err := f.WriteString(licenseText); err != nil {
+	licenseText, err := ioutil.ReadAll(lh)
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	l, err := NewFromFile(f.Name())
+	l, err := NewFromFile(lf)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
@@ -39,11 +40,11 @@ func TestNewFromFile(t *testing.T) {
 		t.Fatalf("unexpected license type: %s", l.Type)
 	}
 
-	if l.Text != licenseText {
+	if l.Text != string(licenseText) {
 		t.Fatalf("unexpected license text: %s", l.Text)
 	}
 
-	if l.File != f.Name() {
+	if l.File != lf {
 		t.Fatalf("unexpected file path: %s", l.File)
 	}
 
@@ -53,9 +54,13 @@ func TestNewFromFile(t *testing.T) {
 	}
 
 	// Fails properly if license type from file is not guessable
-	if err := os.Truncate(f.Name(), 0); err != nil {
+	f, err := ioutil.TempFile("", "go-license")
+	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
+	defer f.Close()
+	defer os.Remove(f.Name())
+
 	f.WriteString("No license data")
 	if _, err := NewFromFile(f.Name()); err == nil {
 		t.Fatalf("expected error guessing license type from non-license file")
@@ -80,9 +85,18 @@ func TestNewFromDir(t *testing.T) {
 		t.Fatalf("err: %s", err)
 	}
 
-	licenseText := "The MIT License (MIT)"
+	lh, err := os.Open(filepath.Join("fixtures", "licenses", "MIT"))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+	defer lh.Close()
 
-	if _, err := f.WriteString(licenseText); err != nil {
+	licenseText, err := ioutil.ReadAll(lh)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if _, err := f.Write(licenseText); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
@@ -95,7 +109,7 @@ func TestNewFromDir(t *testing.T) {
 		t.Fatalf("unexpected license type: %s", l.Type)
 	}
 
-	if l.Text != licenseText {
+	if l.Text != string(licenseText) {
 		t.Fatalf("unexpected license text: %s", l.Text)
 	}
 
