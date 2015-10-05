@@ -21,6 +21,7 @@ const (
 	LicenseGPL30     = "GPL-3.0"
 	LicenseLGPL21    = "LGPL-2.1"
 	LicenseLGPL30    = "LGPL-3.0"
+	LicenseAGPL30    = "AGPL-3.0"
 	LicenseCDDL10    = "CDDL-1.0"
 	LicenseEPL10     = "EPL-1.0"
 	LicenseUnlicense = "Unlicense"
@@ -49,6 +50,7 @@ var KnownLicenses = []string{
 	LicenseGPL30,
 	LicenseLGPL21,
 	LicenseLGPL30,
+	LicenseAGPL30,
 	LicenseCDDL10,
 	LicenseEPL10,
 	LicenseUnlicense,
@@ -183,6 +185,10 @@ func (l *License) GuessType() error {
 	case scan(comp, "gnu lesser general public license version 3, "+
 		"29 june 2007"):
 		l.Type = LicenseLGPL30
+
+	case scan(comp, "gnu affero general public license "+
+		"version 3, 19 november 2007"):
+		l.Type = LicenseAGPL30
 
 	case scan(comp, "mozilla public license, version 2.0"):
 		l.Type = LicenseMPL20
