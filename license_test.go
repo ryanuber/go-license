@@ -79,7 +79,7 @@ func TestNewFromDir(t *testing.T) {
 		t.Fatalf("expected error loading empty directory")
 	}
 
-	fPath := filepath.Join(d, "LICENSE")
+	fPath := filepath.Join(d, "License")
 	f, err := os.Create(fPath)
 	if err != nil {
 		t.Fatalf("err: %s", err)
@@ -173,5 +173,29 @@ func TestLicenseTypes_Abbreviated(t *testing.T) {
 	}
 	if l.Type != LicenseApache20 {
 		t.Fatalf("\nexpected: %s\ngot: %s", LicenseApache20, l.Type)
+	}
+}
+
+func TestMatchLicenseFile(t *testing.T) {
+	// should always return the original test file (mixed case), and
+	//  not the license file version (typically upper case)
+
+	licenses := []string{"copying.txt", "COPYING", "License"}
+	tests := []struct{
+		files []string
+		want string
+	}{
+		{ []string{".", "junk", "COPYING",}, "COPYING"},
+		{ []string{"junk", "copy"}, ""},
+		{ []string{"LICENSE", "foo"}, "LICENSE"},
+		{ []string{"LICENSE.junk", "foo"}, "",},
+		{ []string{"something", "Copying.txt"}, "Copying.txt",},
+	}
+
+	for pos, tt := range tests {
+		got := matchLicenseFile(licenses, tt.files)
+		if got != tt.want {
+			t.Errorf("Test %d: expected %q, got %q", pos, tt.want, got)
+		}
 	}
 }
