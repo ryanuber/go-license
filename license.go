@@ -32,11 +32,18 @@ const (
 )
 
 // A set of reasonable license file names to use when guessing where the
-// license may be.
+// license may be.   Matching is done in case-insensitive manner.
 var DefaultLicenseFiles = []string{
-	"LICENSE", "LICENSE.txt", "LICENSE.md", "license.txt",
-	"COPYING", "COPYING.txt", "COPYING.md", "copying.txt",
+	"LICENSE", "LICENSE.TXT", "LICENSE.MD",
+	"COPYING", "COPYING.TXT", "COPYING.MD",
 	"UNLICENSE",
+}
+
+// make sure inputs are upper-case
+func init() {
+	for pos, val := range DefaultLicenseFiles {
+		DefaultLicenseFiles[pos] = strings.ToUpper(val)
+	}
 }
 
 // A slice of standardized license abbreviations
@@ -126,12 +133,18 @@ func (l *License) GuessFile(dir string) error {
 		return fmt.Errorf("license: cannot search %s: not a directory", dir)
 	}
 
-	for _, file := range DefaultLicenseFiles {
-		filePath := filepath.Join(dir, file)
-		_, err := os.Stat(filePath)
-		if err == nil {
-			l.File = filePath
-			return nil
+	fileinfos, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range fileinfos {
+		upperfile := strings.ToUpper(file.Name())
+		for _, license := range DefaultLicenseFiles {
+			if license == upperfile {
+				l.File =  filepath.Join(dir, file.Name())
+				return nil
+			}
 		}
 	}
 	return errors.New(ErrNoLicenseFile)
