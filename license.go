@@ -142,7 +142,7 @@ func (l *License) GuessFile(dir string) error {
 		upperfile := strings.ToUpper(file.Name())
 		for _, license := range DefaultLicenseFiles {
 			if license == upperfile {
-				l.File =  filepath.Join(dir, file.Name())
+				l.File = filepath.Join(dir, file.Name())
 				return nil
 			}
 		}
