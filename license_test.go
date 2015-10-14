@@ -181,15 +181,15 @@ func TestMatchLicenseFile(t *testing.T) {
 	//  not the license file version (typically upper case)
 
 	licenses := []string{"copying.txt", "COPYING", "License"}
-	tests := []struct{
+	tests := []struct {
 		files []string
-		want string
+		want  string
 	}{
-		{ []string{".", "junk", "COPYING",}, "COPYING"},
-		{ []string{"junk", "copy"}, ""},
-		{ []string{"LICENSE", "foo"}, "LICENSE"},
-		{ []string{"LICENSE.junk", "foo"}, "",},
-		{ []string{"something", "Copying.txt"}, "Copying.txt",},
+		{[]string{".", "junk", "COPYING"}, "COPYING"},
+		{[]string{"junk", "copy"}, ""},
+		{[]string{"LICENSE", "foo"}, "LICENSE"},
+		{[]string{"LICENSE.junk", "foo"}, ""},
+		{[]string{"something", "Copying.txt"}, "Copying.txt"},
 	}
 
 	for pos, tt := range tests {
