@@ -2,9 +2,7 @@ package license
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -32,11 +30,11 @@ const (
 )
 
 // A set of reasonable license file names to use when guessing where the
-// license may be.   Case does not matter.
+// license may be. Case does not matter.
 var DefaultLicenseFiles = []string{
-	"LICENSE", "LICENSE.TXT", "LICENSE.MD",
-	"COPYING", "COPYING.TXT", "COPYING.MD",
-	"UNLICENSE",
+	"license", "license.txt", "license.md",
+	"copying", "copying.txt", "copying.md",
+	"unlicense",
 }
 
 // A slice of standardized license abbreviations
@@ -221,15 +219,6 @@ func scan(text, match string) bool {
 
 // returns a []string of files in a directory, or error
 func readDirectory(dir string) ([]string, error) {
-	d, err := os.Stat(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	if !d.IsDir() {
-		return nil, fmt.Errorf("license: cannot search %s: not a directory", dir)
-	}
-
 	fileinfos, err := ioutil.ReadDir(dir)
 	if err != nil {
 		return nil, err

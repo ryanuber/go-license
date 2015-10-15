@@ -79,7 +79,7 @@ func TestNewFromDir(t *testing.T) {
 		t.Fatalf("expected error loading empty directory")
 	}
 
-	fPath := filepath.Join(d, "License")
+	fPath := filepath.Join(d, "LICENSE")
 	f, err := os.Create(fPath)
 	if err != nil {
 		t.Fatalf("err: %s", err)
