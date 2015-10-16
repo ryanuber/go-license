@@ -1,6 +1,7 @@
 package license
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -198,6 +199,29 @@ func TestMatchLicenseFile(t *testing.T) {
 		got := matchLicenseFile(licenses, tt.files)
 		if !reflect.DeepEqual(got, tt.want) {
 			t.Errorf("Test %d: expected %v, got %v", pos, tt.want, got)
+		}
+	}
+}
+
+func TestGetLicenseFile(t *testing.T) {
+	// should always return the original test file (mixed case), and
+	//  not the license file version (typically upper case)
+
+	licenses := []string{"copying.txt", "COPYING", "License"}
+	tests := []struct {
+		files []string
+		want  string
+		err   error
+	}{
+		{[]string{".", "junk", "COPYING"}, "COPYING", nil},                                // 1 match
+		{[]string{"junk", "copy"}, "", errors.New(ErrNoLicenseFile)},                      // 0 match
+		{[]string{"COPYING", "junk", "Copying.txt"}, "", errors.New(ErrMultipleLicenses)}, // 2 match
+	}
+
+	for pos, tt := range tests {
+		got, err := getLicenseFile(licenses, tt.files)
+		if got != tt.want || !reflect.DeepEqual(err, tt.err) {
+			t.Errorf("Test %d: expected %q with error '%v', got %q with '%v'", pos, tt.want, tt.err, got, err)
 		}
 	}
 }

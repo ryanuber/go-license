@@ -120,17 +120,12 @@ func (l *License) GuessFile(dir string) error {
 	if err != nil {
 		return err
 	}
-	matches := matchLicenseFile(DefaultLicenseFiles, files)
-
-	switch len(matches) {
-	case 0:
-		return errors.New(ErrNoLicenseFile)
-	case 1:
-		l.File = filepath.Join(dir, matches[0])
-		return nil
-	default:
-		return errors.New(ErrMultipleLicenses)
+	match, err := getLicenseFile(DefaultLicenseFiles, files)
+	if err != nil {
+		return err
 	}
+	l.File = filepath.Join(dir, match)
+	return nil
 }
 
 // GuessType will scan license text and attempt to guess what license type it
@@ -235,8 +230,9 @@ func readDirectory(dir string) ([]string, error) {
 	return files, nil
 }
 
-// returns files that case-insensitive matches any of the
-// license files
+// returns files that case-insensitive matches any of the license
+// files.  This is generic functionality so pulled out into separate
+// function for testing
 func matchLicenseFile(licenses []string, files []string) []string {
 	out := make([]string, 0, 1)
 	for _, file := range files {
@@ -247,4 +243,18 @@ func matchLicenseFile(licenses []string, files []string) []string {
 		}
 	}
 	return out
+}
+
+// returns a single license filename or error
+func getLicenseFile(licenses []string, files []string) (string, error) {
+	matches := matchLicenseFile(licenses, files)
+
+	switch len(matches) {
+	case 0:
+		return "", errors.New(ErrNoLicenseFile)
+	case 1:
+		return matches[0], nil
+	default:
+		return "", errors.New(ErrMultipleLicenses)
+	}
 }
