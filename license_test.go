@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -183,19 +184,20 @@ func TestMatchLicenseFile(t *testing.T) {
 	licenses := []string{"copying.txt", "COPYING", "License"}
 	tests := []struct {
 		files []string
-		want  string
+		want  []string
 	}{
-		{[]string{".", "junk", "COPYING"}, "COPYING"},
-		{[]string{"junk", "copy"}, ""},
-		{[]string{"LICENSE", "foo"}, "LICENSE"},
-		{[]string{"LICENSE.junk", "foo"}, ""},
-		{[]string{"something", "Copying.txt"}, "Copying.txt"},
+		{[]string{".", "junk", "COPYING"}, []string{"COPYING"}},
+		{[]string{"junk", "copy"}, []string{}},
+		{[]string{"LICENSE", "foo"}, []string{"LICENSE"}},
+		{[]string{"LICENSE.junk", "foo"}, []string{}},
+		{[]string{"something", "Copying.txt"}, []string{"Copying.txt"}},
+		{[]string{"COPYING", "junk", "Copying.txt"}, []string{"COPYING", "Copying.txt"}},
 	}
 
 	for pos, tt := range tests {
 		got := matchLicenseFile(licenses, tt.files)
-		if got != tt.want {
-			t.Errorf("Test %d: expected %q, got %q", pos, tt.want, got)
+		if !reflect.DeepEqual(got, tt.want) {
+			t.Errorf("Test %d: expected %v, got %v", pos, tt.want, got)
 		}
 	}
 }

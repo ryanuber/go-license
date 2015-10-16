@@ -27,6 +27,7 @@ const (
 	// Various errors
 	ErrNoLicenseFile       = "license: unable to find any license file"
 	ErrUnrecognizedLicense = "license: could not guess license type"
+	ErrMultipleLicenses    = "license: multiple license files found"
 )
 
 // A set of reasonable license file names to use when guessing where the
@@ -119,13 +120,17 @@ func (l *License) GuessFile(dir string) error {
 	if err != nil {
 		return err
 	}
-	match := matchLicenseFile(DefaultLicenseFiles, files)
-	if match != "" {
-		l.File = filepath.Join(dir, match)
-		return nil
-	}
+	matches := matchLicenseFile(DefaultLicenseFiles, files)
 
-	return errors.New(ErrNoLicenseFile)
+	switch len(matches) {
+	case 0:
+		return errors.New(ErrNoLicenseFile)
+	case 1:
+		l.File = filepath.Join(dir, matches[0])
+		return nil
+	default:
+		return errors.New(ErrMultipleLicenses)
+	}
 }
 
 // GuessType will scan license text and attempt to guess what license type it
@@ -230,15 +235,16 @@ func readDirectory(dir string) ([]string, error) {
 	return files, nil
 }
 
-// returns the first file that case-insensitive matches any of the
+// returns files that case-insensitive matches any of the
 // license files
-func matchLicenseFile(licenses []string, files []string) string {
+func matchLicenseFile(licenses []string, files []string) []string {
+	out := make([]string, 0, 1)
 	for _, file := range files {
 		for _, license := range licenses {
 			if strings.EqualFold(license, file) {
-				return file
+				out = append(out, file)
 			}
 		}
 	}
-	return ""
+	return out
 }
