@@ -62,6 +62,10 @@ var (
 	// use a poor man's set here to get O(1) lookups.
 	fileTable    map[string]struct{}
 	licenseTable map[string]struct{}
+
+	// Regular expressions used for normalizing license text.
+	newlineRegexp = regexp.MustCompile("(\r\n|\n)")
+	spaceRegexp   = regexp.MustCompile("\\s{2,}")
 )
 
 // init allocates substructures
@@ -216,18 +220,18 @@ func (l *License) GuessFile(dir string) error {
 // completely deterministic on which license is in play. For now, we will just
 // scan until we find differentiating strings and call that good-enuf.gov.
 func (l *License) GuessType() error {
-	newlineRegexp := regexp.MustCompile("(\r\n|\n)")
-	spaceRegexp := regexp.MustCompile("\\s{2,}")
-
-	// Lower case everything to make comparison more adaptable
+	// Lower case everything to make comparison more adaptable.
 	comp := strings.ToLower(l.Text)
 
 	// Kill the newlines, since it is not clear if the provided license will
 	// contain them or not, and either way it does not change the terms of the
 	// license, so one is not "more correct" than the other. This just replaces
-	// them with spaces. Also replace multiple spaces with a single space to
-	// make comparison more simple.
+	// them with spaces.
 	comp = newlineRegexp.ReplaceAllLiteralString(comp, " ")
+
+	// Collapse all instances of multiple spaces into a single space. This
+	// makes it simple to express license grammar without worrying about
+	// the exact space matching.
 	comp = spaceRegexp.ReplaceAllLiteralString(comp, " ")
 
 	switch {
