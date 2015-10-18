@@ -1,7 +1,7 @@
 package license
 
 import (
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 	"regexp"
@@ -24,37 +24,106 @@ const (
 	LicenseCDDL10    = "CDDL-1.0"
 	LicenseEPL10     = "EPL-1.0"
 	LicenseUnlicense = "Unlicense"
-
-	// Various errors
-	ErrNoLicenseFile       = "license: unable to find any license file"
-	ErrUnrecognizedLicense = "license: could not guess license type"
-	ErrMultipleLicenses    = "license: multiple license files found"
 )
 
-// A set of reasonable license file names to use when guessing where the
-// license may be. Case does not matter.
-var DefaultLicenseFiles = []string{
-	"license", "license.txt", "license.md",
-	"copying", "copying.txt", "copying.md",
-	"unlicense",
+var (
+	// Various errors
+	ErrNoLicenseFile       = fmt.Errorf("unable to find any license file")
+	ErrUnrecognizedLicense = fmt.Errorf("license was not recognized")
+
+	// Base names of guessable license files.
+	fileNames = []string{
+		"copying",
+		"copyleft",
+		"license",
+		"unlicense",
+	}
+
+	// License file extensions. Combined with the licenseFiles slice
+	// to create a set of files we can reasonably assume contain
+	// licensing information.
+	fileExtensions = []string{
+		"",
+		".md",
+		".rst",
+		".txt",
+	}
+
+	// Flat slices of file names and license types. Used to return this
+	// data without ripping through our lookup tables to fabricate one.
+	knownFiles    []string
+	knownLicenses []string
+
+	// Lookup tables used for license file names and license types. We
+	// use a poor man's set here to get O(1) lookups.
+	fileTable    map[string]struct{}
+	licenseTable map[string]struct{}
+)
+
+// init allocates substructures
+func init() {
+	// Generate the list of known file names.
+	size := len(fileNames) * len(fileExtensions)
+	fileTable = make(map[string]struct{}, size)
+	knownFiles = make([]string, 0, size)
+	for _, file := range fileNames {
+		for _, ext := range fileExtensions {
+			knownFiles = append(knownFiles, file+ext)
+			fileTable[file+ext] = struct{}{}
+		}
+	}
+
+	// Initialize the license types.
+	knownLicenses = []string{
+		LicenseMIT,
+		LicenseNewBSD,
+		LicenseFreeBSD,
+		LicenseApache20,
+		LicenseMPL20,
+		LicenseGPL20,
+		LicenseGPL30,
+		LicenseLGPL21,
+		LicenseLGPL30,
+		LicenseAGPL30,
+		LicenseCDDL10,
+		LicenseEPL10,
+		LicenseUnlicense,
+	}
+	licenseTable = make(map[string]struct{}, len(knownLicenses))
+	for _, l := range knownLicenses {
+		licenseTable[l] = struct{}{}
+	}
 }
 
-// A slice of standardized license abbreviations
-var KnownLicenses = []string{
-	LicenseMIT,
-	LicenseISC,
-	LicenseNewBSD,
-	LicenseFreeBSD,
-	LicenseApache20,
-	LicenseMPL20,
-	LicenseGPL20,
-	LicenseGPL30,
-	LicenseLGPL21,
-	LicenseLGPL30,
-	LicenseAGPL30,
-	LicenseCDDL10,
-	LicenseEPL10,
-	LicenseUnlicense,
+// KnownLicenses returns all of the recognized licenses as a slice.
+func KnownLicenses() []string {
+	return knownLicenses
+}
+
+// LicenseFiles returns a slice of the file names go-license knowns
+// about. This result is the set of files which would be examined if
+// guessing a license file name is required.
+func LicenseFiles() []string {
+	return knownFiles
+}
+
+// LicenseFilesInDir will scan the given directory for files which match our
+// list of known license file names.
+func LicenseFilesInDir(dir string) ([]string, error) {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, fmt.Errorf("error reading dir: %v", err)
+	}
+
+	var out []string
+	for _, fi := range files {
+		name := fi.Name()
+		lower := strings.ToLower(name)
+		if _, ok := fileTable[lower]; ok {
+			out = append(out, name)
+		}
+	}
+	return out, nil
 }
 
 // License describes a software license
@@ -99,7 +168,7 @@ func NewFromDir(dir string) (*License, error) {
 	l := new(License)
 
 	if err := l.GuessFile(dir); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error guessing license file: %v", err)
 	}
 
 	return NewFromFile(l.File)
@@ -107,26 +176,21 @@ func NewFromDir(dir string) (*License, error) {
 
 // Recognized determines if the license is known to go-license.
 func (l *License) Recognized() bool {
-	for _, license := range KnownLicenses {
-		if license == l.Type {
-			return true
-		}
-	}
-	return false
+	_, ok := licenseTable[l.Type]
+	return ok
 }
 
 // GuessFile searches a given directory (non-recursively) for files with well-
 // established names that indicate license content.
 func (l *License) GuessFile(dir string) error {
-	files, err := readDirectory(dir)
+	files, err := LicenseFilesInDir(dir)
 	if err != nil {
 		return err
 	}
-	match, err := getLicenseFile(DefaultLicenseFiles, files)
-	if err != nil {
-		return err
+	if len(files) != 1 {
+		return fmt.Errorf("expect one license file, found: %v", files)
 	}
-	l.File = filepath.Join(dir, match)
+	l.File = filepath.Join(dir, files[0])
 	return nil
 }
 
@@ -142,6 +206,11 @@ func (l *License) GuessFile(dir string) error {
 // completely deterministic on which license is in play. For now, we will just
 // scan until we find differentiating strings and call that good-enuf.gov.
 func (l *License) GuessType() error {
+	// GuessType always returns a non-error if the type is known.
+	if l.Type != "" {
+		return nil
+	}
+
 	newlineRegexp := regexp.MustCompile("(\r\n|\n)")
 	spaceRegexp := regexp.MustCompile("\\s{2,}")
 
@@ -210,7 +279,7 @@ func (l *License) GuessType() error {
 		l.Type = LicenseUnlicense
 
 	default:
-		return errors.New(ErrUnrecognizedLicense)
+		return ErrUnrecognizedLicense
 	}
 
 	return nil
@@ -221,46 +290,4 @@ func (l *License) GuessType() error {
 // function so that it need not be repeated for every check.
 func scan(text, match string) bool {
 	return strings.Contains(text, match)
-}
-
-// returns a []string of files in a directory, or error
-func readDirectory(dir string) ([]string, error) {
-	fileinfos, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-	files := make([]string, len(fileinfos))
-	for pos, fi := range fileinfos {
-		files[pos] = fi.Name()
-	}
-	return files, nil
-}
-
-// returns files that case-insensitive matches any of the license
-// files.  This is generic functionality so pulled out into separate
-// function for testing
-func matchLicenseFile(licenses []string, files []string) []string {
-	out := make([]string, 0, 1)
-	for _, file := range files {
-		for _, license := range licenses {
-			if strings.EqualFold(license, file) {
-				out = append(out, file)
-			}
-		}
-	}
-	return out
-}
-
-// returns a single license filename or error
-func getLicenseFile(licenses []string, files []string) (string, error) {
-	matches := matchLicenseFile(licenses, files)
-
-	switch len(matches) {
-	case 0:
-		return "", errors.New(ErrNoLicenseFile)
-	case 1:
-		return matches[0], nil
-	default:
-		return "", errors.New(ErrMultipleLicenses)
-	}
 }
