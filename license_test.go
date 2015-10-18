@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -139,6 +138,11 @@ func TestNewFromDir_fails(t *testing.T) {
 	}
 	defer os.RemoveAll(d)
 
+	// This file should be ignored
+	if _, err := os.Create(filepath.Join(d, "nope")); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
 	// Fails if the directory contains no license files
 	if _, err := NewFromDir(d); err == nil {
 		t.Fatalf("expected error loading empty directory")
@@ -149,15 +153,16 @@ func TestNewFromDir_fails(t *testing.T) {
 		t.Fatalf("expected error loading non-existent directory")
 	}
 
-	// Fails if multiple licenses are found
+	// Fails if multiple licenses are found. Also checks that casing is
+	// ignored in the license file name.
 	if _, err := os.Create(filepath.Join(d, "LICENSE.txt")); err != nil {
 		t.Fatalf("err: %v", err)
 	}
-	if _, err := os.Create(filepath.Join(d, "copying.md")); err != nil {
+	if _, err := os.Create(filepath.Join(d, "copying.RST")); err != nil {
 		t.Fatalf("err: %v", err)
 	}
 	_, err = NewFromDir(d)
-	if err == nil || !strings.Contains(err.Error(), ErrMultipleLicenses) {
+	if err == nil || err.Error() != ErrMultipleLicenses {
 		t.Fatalf("expect %q, got: %v", ErrMultipleLicenses, err)
 	}
 

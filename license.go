@@ -173,7 +173,7 @@ func NewFromDir(dir string) (*License, error) {
 	l := new(License)
 
 	if err := l.GuessFile(dir); err != nil {
-		return nil, fmt.Errorf("error guessing license file: %v", err)
+		return nil, err
 	}
 
 	return NewFromFile(l.File)
