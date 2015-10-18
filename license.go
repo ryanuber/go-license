@@ -24,13 +24,14 @@ const (
 	LicenseCDDL10    = "CDDL-1.0"
 	LicenseEPL10     = "EPL-1.0"
 	LicenseUnlicense = "Unlicense"
+
+	// Various error messages.
+	ErrNoLicenseFile       = "license: unable to find any license file"
+	ErrUnrecognizedLicense = "license: could not guess license type"
+	ErrMultipleLicenses    = "license: multiple license files found"
 )
 
 var (
-	// Various errors
-	ErrNoLicenseFile       = fmt.Errorf("unable to find any license file")
-	ErrUnrecognizedLicense = fmt.Errorf("license was not recognized")
-
 	// Base names of guessable license files.
 	fileNames = []string{
 		"copying",
@@ -49,10 +50,13 @@ var (
 		".txt",
 	}
 
-	// Flat slices of file names and license types. Used to return this
-	// data without ripping through our lookup tables to fabricate one.
-	knownFiles    []string
-	knownLicenses []string
+	// DefaultLicenseFiles provides backwards compatibility. This may go
+	// away later, and it is recommended to use LicenseFiles() instead.
+	DefaultLicenseFiles []string
+
+	// KnownLicenses provides backwards compatibility. This may go away
+	// later, and it is recommended to use LicenseTypes() instead.
+	KnownLicenses []string
 
 	// Lookup tables used for license file names and license types. We
 	// use a poor man's set here to get O(1) lookups.
@@ -65,16 +69,17 @@ func init() {
 	// Generate the list of known file names.
 	size := len(fileNames) * len(fileExtensions)
 	fileTable = make(map[string]struct{}, size)
-	knownFiles = make([]string, 0, size)
+	DefaultLicenseFiles = make([]string, 0, size)
 	for _, file := range fileNames {
 		for _, ext := range fileExtensions {
-			knownFiles = append(knownFiles, file+ext)
-			fileTable[file+ext] = struct{}{}
+			full := file + ext
+			DefaultLicenseFiles = append(DefaultLicenseFiles, full)
+			fileTable[full] = struct{}{}
 		}
 	}
 
 	// Initialize the license types.
-	knownLicenses = []string{
+	KnownLicenses = []string{
 		LicenseMIT,
 		LicenseNewBSD,
 		LicenseFreeBSD,
@@ -89,22 +94,22 @@ func init() {
 		LicenseEPL10,
 		LicenseUnlicense,
 	}
-	licenseTable = make(map[string]struct{}, len(knownLicenses))
-	for _, l := range knownLicenses {
+	licenseTable = make(map[string]struct{}, len(KnownLicenses))
+	for _, l := range KnownLicenses {
 		licenseTable[l] = struct{}{}
 	}
 }
 
-// KnownLicenses returns all of the recognized licenses as a slice.
-func KnownLicenses() []string {
-	return knownLicenses
+// LicenseTypes returns all of the recognized licenses as a slice.
+func LicenseTypes() []string {
+	return KnownLicenses
 }
 
 // LicenseFiles returns a slice of the file names go-license knowns
 // about. This result is the set of files which would be examined if
 // guessing a license file name is required.
 func LicenseFiles() []string {
-	return knownFiles
+	return DefaultLicenseFiles
 }
 
 // LicenseFilesInDir will scan the given directory for files which match our
@@ -187,8 +192,11 @@ func (l *License) GuessFile(dir string) error {
 	if err != nil {
 		return err
 	}
-	if len(files) != 1 {
-		return fmt.Errorf("expect one license file, found: %v", files)
+	if len(files) == 0 {
+		return fmt.Errorf(ErrNoLicenseFile)
+	}
+	if len(files) > 1 {
+		return fmt.Errorf(ErrMultipleLicenses)
 	}
 	l.File = filepath.Join(dir, files[0])
 	return nil
@@ -206,11 +214,6 @@ func (l *License) GuessFile(dir string) error {
 // completely deterministic on which license is in play. For now, we will just
 // scan until we find differentiating strings and call that good-enuf.gov.
 func (l *License) GuessType() error {
-	// GuessType always returns a non-error if the type is known.
-	if l.Type != "" {
-		return nil
-	}
-
 	newlineRegexp := regexp.MustCompile("(\r\n|\n)")
 	spaceRegexp := regexp.MustCompile("\\s{2,}")
 
@@ -279,7 +282,7 @@ func (l *License) GuessType() error {
 		l.Type = LicenseUnlicense
 
 	default:
-		return ErrUnrecognizedLicense
+		return fmt.Errorf(ErrUnrecognizedLicense)
 	}
 
 	return nil

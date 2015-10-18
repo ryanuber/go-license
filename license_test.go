@@ -10,16 +10,16 @@ import (
 
 func TestInit(t *testing.T) {
 	lenFiles := len(fileNames) * len(fileExtensions)
-	if n := len(knownFiles); n != lenFiles {
-		t.Fatalf("knownFiles not initialized: %#v", knownFiles)
+	if n := len(DefaultLicenseFiles); n != lenFiles {
+		t.Fatalf("DefaultLicenseFiles not initialized: %#v", DefaultLicenseFiles)
 	}
 	if n := len(fileTable); n != lenFiles {
 		t.Fatalf("fileTable not initialized: %#v", fileTable)
 	}
 
-	lenLicenses := len(knownLicenses)
+	lenLicenses := len(KnownLicenses)
 	if lenLicenses == 0 {
-		t.Fatalf("knownLicenses not initialized: %#v", knownLicenses)
+		t.Fatalf("KnownLicenses not initialized: %#v", KnownLicenses)
 	}
 	if len(licenseTable) != lenLicenses {
 		t.Fatalf("licenseTable not initialized: %#v", licenseTable)
@@ -157,8 +157,8 @@ func TestNewFromDir_fails(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 	_, err = NewFromDir(d)
-	if err == nil || !strings.Contains(err.Error(), "expect one") {
-		t.Fatalf("expect multiple file error, got: %v", err)
+	if err == nil || !strings.Contains(err.Error(), ErrMultipleLicenses) {
+		t.Fatalf("expect %q, got: %v", ErrMultipleLicenses, err)
 	}
 
 	// Fails if the directory specified is actually a file
@@ -182,7 +182,7 @@ func TestLicenseRecognized(t *testing.T) {
 }
 
 func TestLicenseTypes(t *testing.T) {
-	for _, ltype := range KnownLicenses() {
+	for _, ltype := range KnownLicenses {
 		file := filepath.Join("fixtures", "licenses", ltype)
 		fh, err := os.Open(file)
 		if err != nil {
