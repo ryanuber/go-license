@@ -2,9 +2,7 @@ package license
 
 import (
 	"errors"
-	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -29,14 +27,15 @@ const (
 	// Various errors
 	ErrNoLicenseFile       = "license: unable to find any license file"
 	ErrUnrecognizedLicense = "license: could not guess license type"
+	ErrMultipleLicenses    = "license: multiple license files found"
 )
 
 // A set of reasonable license file names to use when guessing where the
-// license may be.
+// license may be. Case does not matter.
 var DefaultLicenseFiles = []string{
-	"LICENSE", "LICENSE.txt", "LICENSE.md", "license.txt",
-	"COPYING", "COPYING.txt", "COPYING.md", "copying.txt",
-	"UNLICENSE",
+	"license", "license.txt", "license.md",
+	"copying", "copying.txt", "copying.md",
+	"unlicense",
 }
 
 // A slice of standardized license abbreviations
@@ -117,24 +116,16 @@ func (l *License) Recognized() bool {
 // GuessFile searches a given directory (non-recursively) for files with well-
 // established names that indicate license content.
 func (l *License) GuessFile(dir string) error {
-	d, err := os.Stat(dir)
+	files, err := readDirectory(dir)
 	if err != nil {
 		return err
 	}
-
-	if !d.IsDir() {
-		return fmt.Errorf("license: cannot search %s: not a directory", dir)
+	match, err := getLicenseFile(DefaultLicenseFiles, files)
+	if err != nil {
+		return err
 	}
-
-	for _, file := range DefaultLicenseFiles {
-		filePath := filepath.Join(dir, file)
-		_, err := os.Stat(filePath)
-		if err == nil {
-			l.File = filePath
-			return nil
-		}
-	}
-	return errors.New(ErrNoLicenseFile)
+	l.File = filepath.Join(dir, match)
+	return nil
 }
 
 // GuessType will scan license text and attempt to guess what license type it
@@ -224,4 +215,46 @@ func (l *License) GuessType() error {
 // function so that it need not be repeated for every check.
 func scan(text, match string) bool {
 	return strings.Contains(text, match)
+}
+
+// returns a []string of files in a directory, or error
+func readDirectory(dir string) ([]string, error) {
+	fileinfos, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	files := make([]string, len(fileinfos))
+	for pos, fi := range fileinfos {
+		files[pos] = fi.Name()
+	}
+	return files, nil
+}
+
+// returns files that case-insensitive matches any of the license
+// files.  This is generic functionality so pulled out into separate
+// function for testing
+func matchLicenseFile(licenses []string, files []string) []string {
+	out := make([]string, 0, 1)
+	for _, file := range files {
+		for _, license := range licenses {
+			if strings.EqualFold(license, file) {
+				out = append(out, file)
+			}
+		}
+	}
+	return out
+}
+
+// returns a single license filename or error
+func getLicenseFile(licenses []string, files []string) (string, error) {
+	matches := matchLicenseFile(licenses, files)
+
+	switch len(matches) {
+	case 0:
+		return "", errors.New(ErrNoLicenseFile)
+	case 1:
+		return matches[0], nil
+	default:
+		return "", errors.New(ErrMultipleLicenses)
+	}
 }
