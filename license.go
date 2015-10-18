@@ -192,14 +192,16 @@ func (l *License) GuessFile(dir string) error {
 	if err != nil {
 		return err
 	}
-	if len(files) == 0 {
+
+	switch len(files) {
+	case 0:
 		return fmt.Errorf(ErrNoLicenseFile)
-	}
-	if len(files) > 1 {
+	case 1:
+		l.File = filepath.Join(dir, files[0])
+		return nil
+	default:
 		return fmt.Errorf(ErrMultipleLicenses)
 	}
-	l.File = filepath.Join(dir, files[0])
-	return nil
 }
 
 // GuessType will scan license text and attempt to guess what license type it
