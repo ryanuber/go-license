@@ -1,13 +1,30 @@
 package license
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"reflect"
+	"strings"
 	"testing"
 )
+
+func TestInit(t *testing.T) {
+	lenFiles := len(fileNames) * len(fileExtensions)
+	if n := len(knownFiles); n != lenFiles {
+		t.Fatalf("knownFiles not initialized: %#v", knownFiles)
+	}
+	if n := len(fileTable); n != lenFiles {
+		t.Fatalf("fileTable not initialized: %#v", fileTable)
+	}
+
+	lenLicenses := len(knownLicenses)
+	if lenLicenses == 0 {
+		t.Fatalf("knownLicenses not initialized: %#v", knownLicenses)
+	}
+	if len(licenseTable) != lenLicenses {
+		t.Fatalf("licenseTable not initialized: %#v", licenseTable)
+	}
+}
 
 func TestNewLicense(t *testing.T) {
 	l := New("MyLicense", "Some license text.")
@@ -76,11 +93,6 @@ func TestNewFromDir(t *testing.T) {
 	}
 	defer os.RemoveAll(d)
 
-	// Fails properly if the directory contains no license files
-	if _, err := NewFromDir(d); err == nil {
-		t.Fatalf("expected error loading empty directory")
-	}
-
 	fPath := filepath.Join(d, "LICENSE")
 	f, err := os.Create(fPath)
 	if err != nil {
@@ -118,14 +130,39 @@ func TestNewFromDir(t *testing.T) {
 	if l.File != fPath {
 		t.Fatalf("unexpected file path: %s", l.File)
 	}
+}
 
-	// Fails properly if the directory does not exist
+func TestNewFromDir_fails(t *testing.T) {
+	d, err := ioutil.TempDir("", "go-license")
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	defer os.RemoveAll(d)
+
+	// Fails if the directory contains no license files
+	if _, err := NewFromDir(d); err == nil {
+		t.Fatalf("expected error loading empty directory")
+	}
+
+	// Fails if the directory does not exist
 	if _, err := NewFromDir("go-license-nonexistent"); err == nil {
 		t.Fatalf("expected error loading non-existent directory")
 	}
 
-	// Fails properly if the directory specified is actually a file
-	if _, err := NewFromDir(fPath); err == nil {
+	// Fails if multiple licenses are found
+	if _, err := os.Create(filepath.Join(d, "LICENSE.txt")); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	if _, err := os.Create(filepath.Join(d, "copying.md")); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	_, err = NewFromDir(d)
+	if err == nil || !strings.Contains(err.Error(), "expect one") {
+		t.Fatalf("expect multiple file error, got: %v", err)
+	}
+
+	// Fails if the directory specified is actually a file
+	if _, err := NewFromDir(filepath.Join(d, "LICENCSE.txt")); err == nil {
 		t.Fatalf("expected error loading file as directory")
 	}
 }
@@ -145,7 +182,7 @@ func TestLicenseRecognized(t *testing.T) {
 }
 
 func TestLicenseTypes(t *testing.T) {
-	for _, ltype := range KnownLicenses {
+	for _, ltype := range KnownLicenses() {
 		file := filepath.Join("fixtures", "licenses", ltype)
 		fh, err := os.Open(file)
 		if err != nil {
@@ -178,50 +215,9 @@ func TestLicenseTypes_Abbreviated(t *testing.T) {
 	}
 }
 
-func TestMatchLicenseFile(t *testing.T) {
-	// should always return the original test file (mixed case), and
-	//  not the license file version (typically upper case)
-
-	licenses := []string{"copying.txt", "COPYING", "License"}
-	tests := []struct {
-		files []string
-		want  []string
-	}{
-		{[]string{".", "junk", "COPYING"}, []string{"COPYING"}},
-		{[]string{"junk", "copy"}, []string{}},
-		{[]string{"LICENSE", "foo"}, []string{"LICENSE"}},
-		{[]string{"LICENSE.junk", "foo"}, []string{}},
-		{[]string{"something", "Copying.txt"}, []string{"Copying.txt"}},
-		{[]string{"COPYING", "junk", "Copying.txt"}, []string{"COPYING", "Copying.txt"}},
-	}
-
-	for pos, tt := range tests {
-		got := matchLicenseFile(licenses, tt.files)
-		if !reflect.DeepEqual(got, tt.want) {
-			t.Errorf("Test %d: expected %v, got %v", pos, tt.want, got)
-		}
-	}
-}
-
-func TestGetLicenseFile(t *testing.T) {
-	// should always return the original test file (mixed case), and
-	//  not the license file version (typically upper case)
-
-	licenses := []string{"copying.txt", "COPYING", "License"}
-	tests := []struct {
-		files []string
-		want  string
-		err   error
-	}{
-		{[]string{".", "junk", "COPYING"}, "COPYING", nil},                                // 1 match
-		{[]string{"junk", "copy"}, "", errors.New(ErrNoLicenseFile)},                      // 0 match
-		{[]string{"COPYING", "junk", "Copying.txt"}, "", errors.New(ErrMultipleLicenses)}, // 2 match
-	}
-
-	for pos, tt := range tests {
-		got, err := getLicenseFile(licenses, tt.files)
-		if got != tt.want || !reflect.DeepEqual(err, tt.err) {
-			t.Errorf("Test %d: expected %q with error '%v', got %q with '%v'", pos, tt.want, tt.err, got, err)
-		}
+func TestLicenseFiles(t *testing.T) {
+	files := LicenseFiles()
+	if n := len(fileNames) * len(fileExtensions); len(files) != n {
+		t.Fatalf("expect %d files, got: %d", n, len(files))
 	}
 }
