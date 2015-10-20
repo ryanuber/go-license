@@ -212,3 +212,17 @@ func TestLicenseTypes_Abbreviated(t *testing.T) {
 		t.Fatalf("\nexpected: %s\ngot: %s", LicenseApache20, l.Type)
 	}
 }
+
+func TestNormalize(t *testing.T) {
+	for in, expect := range map[string]string{
+		"HeLlO wOrLd":    "hello world",
+		"hello  world":   "hello world",
+		"hello\r\nworld": "hello world",
+		"hello\nworld":   "hello world",
+		"hello, world":   "hello world",
+	} {
+		if out := normalize(in); out != expect {
+			t.Fatalf("expect: %q, got: %q", expect, out)
+		}
+	}
+}

@@ -57,9 +57,13 @@ var (
 	fileTable    map[string]struct{}
 	licenseTable map[string]struct{}
 
-	// Regular expressions used for normalizing license text.
-	newlineRegexp = regexp.MustCompile("(\r\n|\n)")
-	spaceRegexp   = regexp.MustCompile("\\s{2,}")
+	// Global normalizing helpers
+	normalizer = strings.NewReplacer(
+		"\r\n", " ", // Windows newline -> space
+		"\n", " ", // ANSI newline -> space
+		"\t", " ", // Tab stop -> space
+		",", "") // Remove commas
+	spaceRe = regexp.MustCompile("\\s{2,}")
 )
 
 // init allocates substructures
@@ -196,52 +200,37 @@ func GuessFile(dir string) (string, error) {
 // completely deterministic on which license is in play. For now, we will just
 // scan until we find differentiating strings and call that good-enuf.gov.
 func (l *License) GuessType() error {
-	// Lower case everything to make comparison more adaptable.
-	comp := strings.ToLower(l.Text)
-
-	// Kill the newlines, since it is not clear if the provided license will
-	// contain them or not, and either way it does not change the terms of the
-	// license, so one is not "more correct" than the other. This just replaces
-	// them with spaces.
-	comp = newlineRegexp.ReplaceAllLiteralString(comp, " ")
-
-	// Collapse all instances of multiple spaces into a single space. This
-	// makes it simple to express license grammar without worrying about
-	// the exact space matching.
-	comp = spaceRegexp.ReplaceAllLiteralString(comp, " ")
+	// First normalize the license text for accurate comparison.
+	comp := normalize(l.Text)
 
 	switch {
-	case scan(comp, "permission is hereby granted, free of charge, to any "+
+	case scan(comp, "permission is hereby granted free of charge to any "+
 		"person obtaining a copy of this software"):
 		l.Type = LicenseMIT
 
-	case scan(comp, "permission to use, copy, modify, and/or distribute this "+
-		"software for any"):
-		l.Type = LicenseISC
-
-	case scan(comp, "apache license version 2.0, january 2004") ||
+	case scan(comp, "apache license version 2.0 january 2004") ||
 		scan(comp, "http://www.apache.org/licenses/license-2.0"):
 		l.Type = LicenseApache20
 
-	case scan(comp, "gnu general public license version 2, june 1991"):
+	case scan(comp, "gnu general public license version 2 june 1991"):
 		l.Type = LicenseGPL20
 
-	case scan(comp, "gnu general public license version 3, 29 june 2007"):
+	case scan(comp, "gnu general public license version 3 29 june 2007"):
 		l.Type = LicenseGPL30
 
-	case scan(comp, "gnu lesser general public license version 2.1, "+
+	case scan(comp, "gnu lesser general public license version 2.1 "+
 		"february 1999"):
 		l.Type = LicenseLGPL21
 
-	case scan(comp, "gnu lesser general public license version 3, "+
+	case scan(comp, "gnu lesser general public license version 3 "+
 		"29 june 2007"):
 		l.Type = LicenseLGPL30
 
 	case scan(comp, "gnu affero general public license "+
-		"version 3, 19 november 2007"):
+		"version 3 19 november 2007"):
 		l.Type = LicenseAGPL30
 
-	case scan(comp, "mozilla public license") && scan(comp, "version 2.0"):
+	case scan(comp, "mozilla public license version 2.0"):
 		l.Type = LicenseMPL20
 
 	case scan(comp, "redistribution and use in source and binary forms"):
@@ -274,4 +263,18 @@ func (l *License) GuessType() error {
 // bytes is an order of magnitude faster than its strings counterpart.
 func scan(text, pattern string) bool {
 	return bytes.Contains([]byte(text), []byte(pattern))
+}
+
+// normalize is used to massage minor differences out of the given string.
+func normalize(text string) string {
+	// Lower case everything
+	text = strings.ToLower(text)
+
+	// Normalize with the global normalizer
+	text = normalizer.Replace(text)
+
+	// Multiple spaces to a single space
+	text = spaceRe.ReplaceAllLiteralString(text, " ")
+
+	return text
 }
