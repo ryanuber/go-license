@@ -208,30 +208,30 @@ func (l *License) GuessType() error {
 		"person obtaining a copy of this software"):
 		l.Type = LicenseMIT
 
-	case scan(comp, "apache license version 2.0 january 2004") ||
+	case scan(comp, "apache license version 2.0 ") ||
 		scan(comp, "http://www.apache.org/licenses/license-2.0"):
 		l.Type = LicenseApache20
 
-	case scan(comp, "gnu general public license version 2 june 1991"):
-		l.Type = LicenseGPL20
+	// MPL 2.0 must be scanned in before GPL-family licenses
+	case scan(comp, "mozilla public license version 2.0 "):
+		l.Type = LicenseMPL20
 
-	case scan(comp, "gnu general public license version 3 29 june 2007"):
-		l.Type = LicenseGPL30
-
-	case scan(comp, "gnu lesser general public license version 2.1 "+
-		"february 1999"):
+	// Specialized GPL-family licenses must be scanned before the vanilla
+	// GPL2/GPL3 licenses.
+	case scan(comp, "gnu lesser general public license version 2.1 "):
 		l.Type = LicenseLGPL21
 
-	case scan(comp, "gnu lesser general public license version 3 "+
-		"29 june 2007"):
+	case scan(comp, "gnu lesser general public license version 3 "):
 		l.Type = LicenseLGPL30
 
-	case scan(comp, "gnu affero general public license "+
-		"version 3 19 november 2007"):
+	case scan(comp, "gnu affero general public license version 3 "):
 		l.Type = LicenseAGPL30
 
-	case scan(comp, "mozilla public license version 2.0"):
-		l.Type = LicenseMPL20
+	case scan(comp, "gnu general public license version 2 "):
+		l.Type = LicenseGPL20
+
+	case scan(comp, "gnu general public license version 3 "):
+		l.Type = LicenseGPL30
 
 	case scan(comp, "redistribution and use in source and binary forms"):
 		switch {
@@ -242,10 +242,10 @@ func (l *License) GuessType() error {
 		}
 
 	case scan(comp, "common development and distribution license (cddl) "+
-		"version 1.0"):
+		"version 1.0 "):
 		l.Type = LicenseCDDL10
 
-	case scan(comp, "eclipse public license - v 1.0"):
+	case scan(comp, "eclipse public license - v 1.0 "):
 		l.Type = LicenseEPL10
 
 	case scan(comp, "this is free and unencumbered software released into "+
