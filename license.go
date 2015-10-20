@@ -1,6 +1,7 @@
 package license
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -294,9 +295,8 @@ func (l *License) GuessType() error {
 	return nil
 }
 
-// scan is a shortcut function to check for a literal match within a string
-// of text. Any text transformation should be done prior to calling this
-// function so that it need not be repeated for every check.
-func scan(text, match string) bool {
-	return strings.Contains(text, match)
+// scan is used to find substrings. It type-casts to byte slices because
+// bytes is an order of magnitude faster than its strings counterpart.
+func scan(text, pattern string) bool {
+	return bytes.Contains([]byte(text), []byte(pattern))
 }
