@@ -104,16 +104,6 @@ func init() {
 	}
 }
 
-// LicenseTypes returns all of the recognized licenses as a slice.
-func LicenseTypes() []string {
-	return KnownLicenses
-}
-
-// LicenseFiles returns file names we can reasonably assume are licenses.
-func LicenseFiles() []string {
-	return DefaultLicenseFiles
-}
-
 // LicenseFilesInDir will scan the given directory for files which match our
 // list of known license file names.
 func LicenseFilesInDir(dir string) ([]string, error) {
@@ -172,13 +162,12 @@ func NewFromFile(path string) (*License, error) {
 // NewFromDir will search a directory for well-known and accepted license file
 // names, and if one is found, read in its content and guess the license type.
 func NewFromDir(dir string) (*License, error) {
-	l := new(License)
-
-	if err := l.guessFile(dir); err != nil {
+	file, err := GuessFile(dir)
+	if err != nil {
 		return nil, err
 	}
 
-	return NewFromFile(l.File)
+	return NewFromFile(file)
 }
 
 // Recognized determines if the license is known to go-license.
@@ -187,22 +176,21 @@ func (l *License) Recognized() bool {
 	return ok
 }
 
-// guessFile searches a given directory (non-recursively) for files with well-
+// GuessFile searches a given directory (non-recursively) for files with well-
 // established names that indicate license content.
-func (l *License) guessFile(dir string) error {
+func GuessFile(dir string) (string, error) {
 	files, err := LicenseFilesInDir(dir)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	switch len(files) {
 	case 0:
-		return errors.New(ErrNoLicenseFile)
+		return "", errors.New(ErrNoLicenseFile)
 	case 1:
-		l.File = filepath.Join(dir, files[0])
-		return nil
+		return filepath.Join(dir, files[0]), nil
 	default:
-		return errors.New(ErrMultipleLicenses)
+		return "", errors.New(ErrMultipleLicenses)
 	}
 }
 

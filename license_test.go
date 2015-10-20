@@ -219,10 +219,3 @@ func TestLicenseTypes_Abbreviated(t *testing.T) {
 		t.Fatalf("\nexpected: %s\ngot: %s", LicenseApache20, l.Type)
 	}
 }
-
-func TestLicenseFiles(t *testing.T) {
-	files := LicenseFiles()
-	if n := len(fileNames) * len(fileExtensions); len(files) != n {
-		t.Fatalf("expect %d files, got: %d", n, len(files))
-	}
-}
