@@ -9,18 +9,11 @@ import (
 
 func TestInit(t *testing.T) {
 	lenFiles := len(fileNames) * len(fileExtensions)
-	if n := len(DefaultLicenseFiles); n != lenFiles {
-		t.Fatalf("DefaultLicenseFiles not initialized: %#v", DefaultLicenseFiles)
-	}
 	if n := len(fileTable); n != lenFiles {
 		t.Fatalf("fileTable not initialized: %#v", fileTable)
 	}
 
-	lenLicenses := len(KnownLicenses)
-	if lenLicenses == 0 {
-		t.Fatalf("KnownLicenses not initialized: %#v", KnownLicenses)
-	}
-	if len(licenseTable) != lenLicenses {
+	if len(licenseTable) == 0 {
 		t.Fatalf("licenseTable not initialized: %#v", licenseTable)
 	}
 }
@@ -187,7 +180,7 @@ func TestLicenseRecognized(t *testing.T) {
 }
 
 func TestLicenseTypes(t *testing.T) {
-	for _, ltype := range KnownLicenses {
+	for ltype, _ := range licenseTable {
 		file := filepath.Join("fixtures", "licenses", ltype)
 		fh, err := os.Open(file)
 		if err != nil {

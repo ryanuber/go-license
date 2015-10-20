@@ -52,12 +52,6 @@ var (
 		".txt",
 	}
 
-	// DefaultLicenseFiles is deprecated. Use LicenseFiles() instead.
-	DefaultLicenseFiles []string
-
-	// KnownLicenses is deprecated. Use LicenseTypes() instead.
-	KnownLicenses []string
-
 	// Lookup tables used for license file names and license types. We
 	// use a poor man's set here to get O(1) lookups.
 	fileTable    map[string]struct{}
@@ -73,17 +67,15 @@ func init() {
 	// Generate the list of known file names.
 	size := len(fileNames) * len(fileExtensions)
 	fileTable = make(map[string]struct{}, size)
-	DefaultLicenseFiles = make([]string, 0, size)
 	for _, file := range fileNames {
 		for _, ext := range fileExtensions {
-			full := file + ext
-			DefaultLicenseFiles = append(DefaultLicenseFiles, full)
-			fileTable[full] = struct{}{}
+			fileTable[file+ext] = struct{}{}
 		}
 	}
 
 	// Initialize the license types.
-	KnownLicenses = []string{
+	licenseTable = make(map[string]struct{})
+	for _, l := range []string{
 		LicenseMIT,
 		LicenseNewBSD,
 		LicenseFreeBSD,
@@ -97,9 +89,7 @@ func init() {
 		LicenseCDDL10,
 		LicenseEPL10,
 		LicenseUnlicense,
-	}
-	licenseTable = make(map[string]struct{}, len(KnownLicenses))
-	for _, l := range KnownLicenses {
+	} {
 		licenseTable[l] = struct{}{}
 	}
 }
