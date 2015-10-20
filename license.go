@@ -52,12 +52,10 @@ var (
 		".txt",
 	}
 
-	// DefaultLicenseFiles provides backwards compatibility. This may go
-	// away later, and it is recommended to use LicenseFiles() instead.
+	// DefaultLicenseFiles is deprecated. Use LicenseFiles() instead.
 	DefaultLicenseFiles []string
 
-	// KnownLicenses provides backwards compatibility. This may go away
-	// later, and it is recommended to use LicenseTypes() instead.
+	// KnownLicenses is deprecated. Use LicenseTypes() instead.
 	KnownLicenses []string
 
 	// Lookup tables used for license file names and license types. We
@@ -111,9 +109,7 @@ func LicenseTypes() []string {
 	return KnownLicenses
 }
 
-// LicenseFiles returns a slice of the file names go-license knowns
-// about. This result is the set of files which would be examined if
-// guessing a license file name is required.
+// LicenseFiles returns file names we can reasonably assume are licenses.
 func LicenseFiles() []string {
 	return DefaultLicenseFiles
 }
@@ -178,7 +174,7 @@ func NewFromFile(path string) (*License, error) {
 func NewFromDir(dir string) (*License, error) {
 	l := new(License)
 
-	if err := l.GuessFile(dir); err != nil {
+	if err := l.guessFile(dir); err != nil {
 		return nil, err
 	}
 
@@ -191,9 +187,9 @@ func (l *License) Recognized() bool {
 	return ok
 }
 
-// GuessFile searches a given directory (non-recursively) for files with well-
+// guessFile searches a given directory (non-recursively) for files with well-
 // established names that indicate license content.
-func (l *License) GuessFile(dir string) error {
+func (l *License) guessFile(dir string) error {
 	files, err := LicenseFilesInDir(dir)
 	if err != nil {
 		return err
