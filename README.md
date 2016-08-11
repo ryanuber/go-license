@@ -27,6 +27,9 @@ names.
 `MIT`<br>
 The MIT license. ([text](fixtures/licenses/MIT))
 
+`ISC`<br>
+The ISC license. ([text](fixtures/licenses/ISC))
+
 `NewBSD`<br>
 The "new" or "revised" BSD license.
 ([text](fixtures/licenses/NewBSD))
