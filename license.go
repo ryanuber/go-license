@@ -11,6 +11,7 @@ import (
 const (
 	// Recognized license types
 	LicenseMIT       = "MIT"
+	LicenseISC       = "ISC"
 	LicenseNewBSD    = "NewBSD"
 	LicenseFreeBSD   = "FreeBSD"
 	LicenseApache20  = "Apache-2.0"
@@ -41,6 +42,7 @@ var DefaultLicenseFiles = []string{
 // A slice of standardized license abbreviations
 var KnownLicenses = []string{
 	LicenseMIT,
+	LicenseISC,
 	LicenseNewBSD,
 	LicenseFreeBSD,
 	LicenseApache20,
@@ -158,6 +160,10 @@ func (l *License) GuessType() error {
 	case scan(comp, "permission is hereby granted, free of charge, to any "+
 		"person obtaining a copy of this software"):
 		l.Type = LicenseMIT
+
+	case scan(comp, "permission to use, copy, modify, and/or distribute this "+
+		"software for any"):
+		l.Type = LicenseISC
 
 	case scan(comp, "apache license version 2.0, january 2004") ||
 		scan(comp, "http://www.apache.org/licenses/license-2.0"):
