@@ -261,6 +261,11 @@ func TestSearchDir(t *testing.T) {
 		t.Fatalf("err: %v", err)
 	}
 
+	// Create a directory. Should be skipped over.
+	if err := os.Mkdir(filepath.Join(dir, "dir"), 0700); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
 	// Find all the recognized files
 	result, err := SearchDir(dir)
 	if err != nil {
