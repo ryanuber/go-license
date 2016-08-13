@@ -64,22 +64,38 @@ var (
 		"\t", " ", // Tab stop -> space
 		",", "") // Remove commas
 	spaceRe = regexp.MustCompile("\\s{2,}")
+
+	// The following exported vars are here for backwards compatibility.
+	// In normal usage they should not be required, but the original
+	// library exported these, so here they remain.
+
+	// List of license file names to be scanned.
+	DefaultLicenseFiles []string
+
+	// List of license identifier strings.
+	KnownLicenses []string
 )
 
 // init allocates substructures
 func init() {
-	// Generate the list of known file names.
 	size := len(fileNames) * len(fileExtensions)
+
+	// Initialize the global vars
+	DefaultLicenseFiles = make([]string, size)
+	KnownLicenses = make([]string, size)
+
+	// Generate the list of known file names.
 	fileTable = make(map[string]struct{}, size)
-	for _, file := range fileNames {
+	for i, file := range fileNames {
 		for _, ext := range fileExtensions {
 			fileTable[file+ext] = struct{}{}
+			DefaultLicenseFiles[i] = file + ext
 		}
 	}
 
 	// Initialize the license types.
 	licenseTable = make(map[string]struct{})
-	for _, l := range []string{
+	for i, l := range []string{
 		LicenseMIT,
 		LicenseNewBSD,
 		LicenseFreeBSD,
@@ -95,6 +111,7 @@ func init() {
 		LicenseUnlicense,
 	} {
 		licenseTable[l] = struct{}{}
+		KnownLicenses[i] = l
 	}
 }
 
