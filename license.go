@@ -1,3 +1,9 @@
+// Package license provides software license identification.
+//
+// A number of common license types are built-in, allowing the license
+// package to automatically identify them based on their text body.
+// Any license type may be used. PR's are very welcome for unrecognized
+// license types.
 package license
 
 import (
@@ -80,22 +86,18 @@ var (
 func init() {
 	size := len(fileNames) * len(fileExtensions)
 
-	// Initialize the global vars
-	DefaultLicenseFiles = make([]string, size)
-	KnownLicenses = make([]string, size)
-
 	// Generate the list of known file names.
 	fileTable = make(map[string]struct{}, size)
-	for i, file := range fileNames {
+	for _, file := range fileNames {
 		for _, ext := range fileExtensions {
 			fileTable[file+ext] = struct{}{}
-			DefaultLicenseFiles[i] = file + ext
+			DefaultLicenseFiles = append(DefaultLicenseFiles, file+ext)
 		}
 	}
 
 	// Initialize the license types.
 	licenseTable = make(map[string]struct{})
-	for i, l := range []string{
+	for _, l := range []string{
 		LicenseMIT,
 		LicenseNewBSD,
 		LicenseFreeBSD,
@@ -111,27 +113,8 @@ func init() {
 		LicenseUnlicense,
 	} {
 		licenseTable[l] = struct{}{}
-		KnownLicenses[i] = l
+		KnownLicenses = append(KnownLicenses, l)
 	}
-}
-
-// LicenseFilesInDir will scan the given directory for files which match our
-// list of known license file names.
-func LicenseFilesInDir(dir string) ([]string, error) {
-	files, err := ioutil.ReadDir(dir)
-	if err != nil {
-		return nil, err
-	}
-
-	var out []string
-	for _, fi := range files {
-		name := fi.Name()
-		lower := strings.ToLower(name)
-		if _, ok := fileTable[lower]; ok {
-			out = append(out, name)
-		}
-	}
-	return out, nil
 }
 
 // License describes a software license
@@ -143,11 +126,10 @@ type License struct {
 
 // New creates a new License from explicitly passed license type and data
 func New(licenseType, licenseText string) *License {
-	l := &License{
+	return &License{
 		Type: licenseType,
 		Text: licenseText,
 	}
-	return l
 }
 
 // NewFromFile will attempt to load a license from a file on disk, and guess the
@@ -173,35 +155,19 @@ func NewFromFile(path string) (*License, error) {
 // NewFromDir will search a directory for well-known and accepted license file
 // names, and if one is found, read in its content and guess the license type.
 func NewFromDir(dir string) (*License, error) {
-	file, err := GuessFile(dir)
+	files, err := SearchDir(dir)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewFromFile(file)
-}
-
-// Recognized determines if the license is known to go-license.
-func (l *License) Recognized() bool {
-	_, ok := licenseTable[l.Type]
-	return ok
-}
-
-// GuessFile searches a given directory (non-recursively) for files with well-
-// established names that indicate license content.
-func GuessFile(dir string) (string, error) {
-	files, err := LicenseFilesInDir(dir)
-	if err != nil {
-		return "", err
-	}
-
 	switch len(files) {
 	case 0:
-		return "", errors.New(ErrNoLicenseFile)
+		return nil, errors.New(ErrNoLicenseFile)
 	case 1:
-		return filepath.Join(dir, files[0]), nil
+		path := filepath.Join(dir, files[0])
+		return NewFromFile(path)
 	default:
-		return "", errors.New(ErrMultipleLicenses)
+		return nil, errors.New(ErrMultipleLicenses)
 	}
 }
 
@@ -274,6 +240,34 @@ func (l *License) GuessType() error {
 	}
 
 	return nil
+}
+
+// Recognized determines if the license is known to go-license.
+func (l *License) Recognized() bool {
+	_, ok := licenseTable[l.Type]
+	return ok
+}
+
+// SearchDir will scan the given directory for files which match our
+// list of known license file names.
+func SearchDir(dir string) ([]string, error) {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+
+	var out []string
+	for _, fi := range files {
+		if !fi.Mode().IsRegular() {
+			continue
+		}
+		name := fi.Name()
+		lower := strings.ToLower(name)
+		if _, ok := fileTable[lower]; ok {
+			out = append(out, name)
+		}
+	}
+	return out, nil
 }
 
 // scan is used to find substrings. It type-casts to byte slices because

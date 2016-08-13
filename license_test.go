@@ -4,17 +4,24 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
 func TestInit(t *testing.T) {
 	lenFiles := len(fileNames) * len(fileExtensions)
-	if n := len(fileTable); n != lenFiles {
+	if len(fileTable) != lenFiles {
 		t.Fatalf("fileTable not initialized: %#v", fileTable)
+	}
+	if len(DefaultLicenseFiles) != len(fileTable) {
+		t.Fatalf("DefaultLicenseFiles not initialized: %#v", DefaultLicenseFiles)
 	}
 
 	if len(licenseTable) == 0 {
 		t.Fatalf("licenseTable not initialized: %#v", licenseTable)
+	}
+	if len(KnownLicenses) != len(licenseTable) {
+		t.Fatalf("KnownLicenses not initialized: %#v", KnownLicenses)
 	}
 }
 
@@ -58,21 +65,26 @@ func TestNewFromFile(t *testing.T) {
 	if l.File != lf {
 		t.Fatalf("unexpected file path: %s", l.File)
 	}
+}
 
-	// Fails properly if the file doesn't exist
-	if _, err := NewFromFile("/tmp/go-license-nonexistent"); err == nil {
+func TestNewFromFile_fails(t *testing.T) {
+	// Fails if the file doesn't exist
+	if _, err := NewFromFile("/unicorns/leprechauns"); err == nil {
 		t.Fatalf("expected error loading non-existent file")
 	}
 
-	// Fails properly if license type from file is not guessable
+	// Fails if license type from file is not guessable
 	f, err := ioutil.TempFile("", "go-license")
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-	defer f.Close()
 	defer os.Remove(f.Name())
+	defer f.Close()
 
-	f.WriteString("No license data")
+	if _, err := f.WriteString("No license data"); err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
 	if _, err := NewFromFile(f.Name()); err == nil {
 		t.Fatalf("expected error guessing license type from non-license file")
 	}
@@ -224,5 +236,39 @@ func TestNormalize(t *testing.T) {
 		if out := normalize(in); out != expect {
 			t.Fatalf("expect: %q, got: %q", expect, out)
 		}
+	}
+}
+
+func TestSearchDir(t *testing.T) {
+	// Make a temp dir
+	dir, err := ioutil.TempDir("", "go-license")
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+	defer os.RemoveAll(dir)
+
+	// Create all the recognized license file names
+	for _, name := range DefaultLicenseFiles {
+		path := filepath.Join(dir, name)
+		if err := ioutil.WriteFile(path, []byte{}, 0600); err != nil {
+			t.Fatalf("err: %v", err)
+		}
+	}
+
+	// Create a bogus file name (shouldn't be returned)
+	err = ioutil.WriteFile(filepath.Join(dir, "nope"), []byte{}, 0600)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Find all the recognized files
+	result, err := SearchDir(dir)
+	if err != nil {
+		t.Fatalf("err: %v", err)
+	}
+
+	// Check that we got the expected result
+	if !reflect.DeepEqual(result, DefaultLicenseFiles) {
+		t.Fatalf("expect: %v\nactual: %v", DefaultLicenseFiles, result)
 	}
 }
