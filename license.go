@@ -24,11 +24,13 @@ const (
 	LicenseCDDL10    = "CDDL-1.0"
 	LicenseEPL10     = "EPL-1.0"
 	LicenseUnlicense = "Unlicense"
+)
 
+var (
 	// Various errors
-	ErrNoLicenseFile       = "license: unable to find any license file"
-	ErrUnrecognizedLicense = "license: could not guess license type"
-	ErrMultipleLicenses    = "license: multiple license files found"
+	ErrNoLicenseFile       = errors.New("license: unable to find any license file")
+	ErrUnrecognizedLicense = errors.New("license: could not guess license type")
+	ErrMultipleLicenses    = errors.New("license: multiple license files found")
 )
 
 // A set of reasonable license file names to use when guessing where the
@@ -210,7 +212,7 @@ func (l *License) GuessType() error {
 		l.Type = LicenseUnlicense
 
 	default:
-		return errors.New(ErrUnrecognizedLicense)
+		return ErrUnrecognizedLicense
 	}
 
 	return nil
@@ -257,10 +259,10 @@ func getLicenseFile(licenses []string, files []string) (string, error) {
 
 	switch len(matches) {
 	case 0:
-		return "", errors.New(ErrNoLicenseFile)
+		return "", ErrNoLicenseFile
 	case 1:
 		return matches[0], nil
 	default:
-		return "", errors.New(ErrMultipleLicenses)
+		return "", ErrMultipleLicenses
 	}
 }

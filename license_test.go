@@ -1,7 +1,6 @@
 package license
 
 import (
-	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -213,9 +212,9 @@ func TestGetLicenseFile(t *testing.T) {
 		want  string
 		err   error
 	}{
-		{[]string{".", "junk", "COPYING"}, "COPYING", nil},                                // 1 match
-		{[]string{"junk", "copy"}, "", errors.New(ErrNoLicenseFile)},                      // 0 match
-		{[]string{"COPYING", "junk", "Copying.txt"}, "", errors.New(ErrMultipleLicenses)}, // 2 match
+		{[]string{".", "junk", "COPYING"}, "COPYING", nil},                    // 1 match
+		{[]string{"junk", "copy"}, "", ErrNoLicenseFile},                      // 0 match
+		{[]string{"COPYING", "junk", "Copying.txt"}, "", ErrMultipleLicenses}, // 2 match
 	}
 
 	for pos, tt := range tests {
