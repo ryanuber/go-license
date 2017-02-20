@@ -187,7 +187,7 @@ func (l *License) GuessType() error {
 		"version 3, 19 november 2007"):
 		l.Type = LicenseAGPL30
 
-	case scan(comp, "mozilla public license, version 2.0"):
+	case scan(comp, "mozilla public license") && scan(comp, "version 2.0"):
 		l.Type = LicenseMPL20
 
 	case scan(comp, "redistribution and use in source and binary forms"):
