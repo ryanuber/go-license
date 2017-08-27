@@ -37,6 +37,7 @@ var (
 // license may be. Case does not matter.
 var DefaultLicenseFiles = []string{
 	"license", "license.txt", "license.md",
+	"licence", "licence.txt", "licence.md",
 	"copying", "copying.txt", "copying.md",
 	"unlicense",
 }
