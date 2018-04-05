@@ -167,6 +167,10 @@ func (l *License) GuessType() error {
 	case scan(comp, "permission to use, copy, modify, and/or distribute this "+
 		"software for any"):
 		l.Type = LicenseISC
+	// When originally released the license did not include the term "and/or", this was added by ISC in 2007
+	case scan(comp, "permission to use, copy, modify, and distribute this "+
+		"software for any"):
+		l.Type = LicenseISC
 
 	case scan(comp, "apache license version 2.0, january 2004") ||
 		scan(comp, "http://www.apache.org/licenses/license-2.0"):
